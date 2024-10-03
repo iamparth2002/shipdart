@@ -1,3 +1,4 @@
+'use client'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,8 +11,10 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function LandingPage() {
+  const router = useRouter()
   const navItems = [
     { name: 'Transparent Pricing', icon: Truck },
     { name: 'Security for package', icon: ShieldCheck },
@@ -22,9 +25,9 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className=" mx-auto px-4 py-16 md:py-24 lg:py-16 lg:px-16 flex flex-col md:flex-row items-center">
         <div className="md:w-1/2 space-y-6">
-          <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+          <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
             Your <span className="text-primary">reliable,</span>
-            <br />
+            <br className='sm:hidden block'/>
             fast and quality
             <br />
             <span className="text-primary">courier service.</span>
@@ -32,7 +35,7 @@ export default function LandingPage() {
           <p className="text-muted pr-16">
              Lorem ipsum dolor sit amet consectetur adipisicing elit. Laudantium veniam quia qui est in ullam, suscipit ad placeat molestias blanditiis, nam aliquid consequuntur! Recusandae consequatur libero eaque delectus necessitatibus dolore quos quia! Quidem excepturi
           </p>
-          <Button className="rounded-full">Get Started</Button>
+          <Button className="rounded-full" onClick={() => router.push('/signup')}>Get Started</Button>
           <div className="flex items-center space-x-4">
             <div className="flex -space-x-2">
               {[...Array(4)].map((_, i) => (
@@ -274,25 +277,25 @@ export default function LandingPage() {
       </section>
 
       {/* Newsletter */}
-      <section className=" mx-auto px-4 py-4 lg:py-8 lg:px-16">
+      {/* <section className=" mx-auto px-4 py-4 lg:py-8 lg:px-16">
         <div className="bg-accent rounded-lg p-8 text-center">
           <h2 className="text-3xl font-bold mb-4">Subscribe our newsletter</h2>
           <p className="mb-6">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit
             tellus, luctus nec ullamcorper mattis.
           </p>
-          {/* <div className="flex max-w-md mx-auto">
+          <div className="flex max-md:flex-col  md:max-w-md ">
             <input
               type="email"
               placeholder="Your email address"
-              className="flex-grow p-2 rounded-l-full"
+              className="flex-grow p-2 rounded-full md:rounded-l-full"
             />
-            <button className="bg-background text-foreground px-6 py-2 rounded-r-full bg-black text-white">
+            <button className=" rounded-full max-sm:mt-2 text-foreground px-6 py-2 md:rounded-r-full bg-primary text-white">
               Subscribe
             </button>
-          </div> */}
+          </div>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }

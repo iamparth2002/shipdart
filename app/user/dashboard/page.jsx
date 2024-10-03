@@ -13,12 +13,16 @@ import {
   User,
   ArrowLeft,
   Pencil,
+  CalculatorIcon,
 } from 'lucide-react';
 import Sidebar from '@/components/custom/Sidebar';
+import Tickets from './_components/Tickets';
+import Profile from './_components/Profile';
+import RateCalculator from './_components/RateCalculator';
 
 export default function Dashboard() {
   const [isSidenavOpen, setIsSidenavOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('Orders');
+  const [activeSection, setActiveSection] = useState(() => localStorage.getItem('activeSection') || 'Orders');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [editingAddress, setEditingAddress] = useState(null);
   const [addresses, setAddresses] = useState([
@@ -44,10 +48,16 @@ export default function Dashboard() {
 
   const toggleSidenav = () => setIsSidenavOpen(!isSidenavOpen);
 
+  const handleSetActiveSection = (section) => {
+    setActiveSection(section);
+    localStorage.setItem('activeSection', section);
+  };
+
   const navItems = [
     { name: 'Orders', icon: Package },
     { name: 'Tickets', icon: Ticket },
     { name: 'Profile', icon: User },
+    { name: 'Calculate', icon: CalculatorIcon },
   ];
 
   const renderOrderDetails = (order) => (
@@ -164,129 +174,7 @@ export default function Dashboard() {
     </Card>
   );
 
-  const handleEditAddress = (address) => {
-    setEditingAddress({ ...address });
-  };
 
-  const handleSaveAddress = () => {
-    setAddresses(
-      addresses.map((addr) =>
-        addr.id === editingAddress.id ? editingAddress : addr
-      )
-    );
-    setEditingAddress(null);
-  };
-
-  const renderAddresses = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle>Saved Addresses</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {addresses.map((address) => (
-            <div key={address.id} className="border p-4 rounded-lg">
-              {editingAddress && editingAddress.id === address.id ? (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSaveAddress();
-                  }}
-                  className="space-y-2"
-                >
-                  <Input
-                    value={editingAddress.name}
-                    onChange={(e) =>
-                      setEditingAddress({
-                        ...editingAddress,
-                        name: e.target.value,
-                      })
-                    }
-                    placeholder="Name"
-                  />
-                  <Input
-                    value={editingAddress.street}
-                    onChange={(e) =>
-                      setEditingAddress({
-                        ...editingAddress,
-                        street: e.target.value,
-                      })
-                    }
-                    placeholder="Street"
-                  />
-                  <Input
-                    value={editingAddress.city}
-                    onChange={(e) =>
-                      setEditingAddress({
-                        ...editingAddress,
-                        city: e.target.value,
-                      })
-                    }
-                    placeholder="City"
-                  />
-                  <Input
-                    value={editingAddress.state}
-                    onChange={(e) =>
-                      setEditingAddress({
-                        ...editingAddress,
-                        state: e.target.value,
-                      })
-                    }
-                    placeholder="State"
-                  />
-                  <Input
-                    value={editingAddress.zip}
-                    onChange={(e) =>
-                      setEditingAddress({
-                        ...editingAddress,
-                        zip: e.target.value,
-                      })
-                    }
-                    placeholder="ZIP"
-                  />
-                  <Input
-                    value={editingAddress.country}
-                    onChange={(e) =>
-                      setEditingAddress({
-                        ...editingAddress,
-                        country: e.target.value,
-                      })
-                    }
-                    placeholder="Country"
-                  />
-                  <Button type="submit">Save</Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setEditingAddress(null)}
-                  >
-                    Cancel
-                  </Button>
-                </form>
-              ) : (
-                <>
-                  <p className="font-semibold">{address.name}</p>
-                  <p>{address.street}</p>
-                  <p>
-                    {address.city}, {address.state} {address.zip}
-                  </p>
-                  <p>{address.country}</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => handleEditAddress(address)}
-                  >
-                    <Pencil className="h-4 w-4 mr-2" /> Edit
-                  </Button>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   const renderContent = () => {
     switch (activeSection) {
@@ -390,86 +278,15 @@ export default function Dashboard() {
         );
       case 'Tickets':
         return (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Ticket System</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>Create New Ticket</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-4">
-                  <div>
-                    <Label htmlFor="subject">Subject</Label>
-                    <Input id="subject" placeholder="Enter ticket subject" />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <textarea
-                      id="description"
-                      className="w-full p-2 border rounded"
-                      rows={4}
-                      placeholder="Describe your issue"
-                    ></textarea>
-                  </div>
-                  <Button type="submit">Submit Ticket</Button>
-                </form>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Ticket History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>
-                  View the status and history of your submitted tickets here.
-                </p>
-                {/* Add a list or table of ticket history */}
-              </CardContent>
-            </Card>
-          </div>
+          <Tickets/>
         );
       case 'Profile':
         return (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Profile Page</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>Edit Profile</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" placeholder="Your Name" />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="your@email.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="Your phone number"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="notifications">
-                      Notification Preferences
-                    </Label>
-                    {/* Add checkboxes or radio buttons for notification preferences */}
-                  </div>
-                  <Button type="submit">Save Changes</Button>
-                </form>
-              </CardContent>
-            </Card>
-            {renderAddresses()}
-          </div>
+          <Profile/>
+        );
+      case 'Calculate':
+        return (
+          <RateCalculator/>
         );
       default:
         return null;
@@ -484,7 +301,7 @@ export default function Dashboard() {
         toggleSidebar={toggleSidenav}
         navItems={navItems}
         activeTab={activeSection}
-        setActiveTab={setActiveSection}
+        setActiveTab={handleSetActiveSection}
       />
 
       {/* Main content */}

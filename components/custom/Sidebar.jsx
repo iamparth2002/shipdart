@@ -1,7 +1,9 @@
+'use client';
 import React from 'react';
 import { CircleUserRound, LogOut, X } from 'lucide-react';
-
+import Cookies from 'js-cookie';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 const Sidebar = ({
   title,
@@ -11,6 +13,12 @@ const Sidebar = ({
   activeTab,
   setActiveTab,
 }) => {
+  const router = useRouter();
+  const handleLogout = () => {
+    Cookies.remove('token');
+
+    router.push('/login');
+  };
   return (
     <aside
       className={`${
@@ -51,6 +59,7 @@ const Sidebar = ({
           <Button
             variant="ghost"
             className="mt-2 w-full gap-4 justify-start text-white hover:bg-gray-700 hover:text-white"
+            onClick={handleLogout}
           >
             <LogOut className="h-5 w-5" />
             Logout
