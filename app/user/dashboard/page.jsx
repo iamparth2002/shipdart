@@ -22,7 +22,7 @@ import RateCalculator from './_components/RateCalculator';
 
 export default function Dashboard() {
   const [isSidenavOpen, setIsSidenavOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState(() => localStorage.getItem('activeSection') || 'Orders');
+  const [activeSection, setActiveSection] = useState('Orders');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [editingAddress, setEditingAddress] = useState(null);
   const [addresses, setAddresses] = useState([
@@ -47,11 +47,6 @@ export default function Dashboard() {
   ]);
 
   const toggleSidenav = () => setIsSidenavOpen(!isSidenavOpen);
-
-  const handleSetActiveSection = (section) => {
-    setActiveSection(section);
-    localStorage.setItem('activeSection', section);
-  };
 
   const navItems = [
     { name: 'Orders', icon: Package },
@@ -301,7 +296,7 @@ export default function Dashboard() {
         toggleSidebar={toggleSidenav}
         navItems={navItems}
         activeTab={activeSection}
-        setActiveTab={handleSetActiveSection}
+        setActiveTab={setActiveSection}
       />
 
       {/* Main content */}
