@@ -15,3 +15,16 @@ export function capitalizeFirstLetter(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+export const fetchWalletBalance = async (setWalletBalance,setLoading) => {
+  try {
+
+      const response = await axiosInstance.get('/users/profile');
+      if (response.status === 200 && response.data.wallet) {
+        setWalletBalance(response.data.wallet);
+      }
+  } catch (error) {
+    console.error('Failed to fetch wallet balance:', error);
+  } finally {
+    setLoading(false);
+  }
+};

@@ -190,7 +190,10 @@ export default function RateCalculator() {
               </div>
             )}
           </CardContent>
+          
         </Card>
+
+        
       ) : (
         <Card className="mt-4">
           <CardHeader>

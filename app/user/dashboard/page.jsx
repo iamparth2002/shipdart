@@ -13,12 +13,17 @@ import {
   User,
   ArrowLeft,
   Pencil,
+  ArrowLeftRight,
   CalculatorIcon,
+  Plus,
 } from 'lucide-react';
 import Sidebar from '@/components/custom/Sidebar';
 import Tickets from './_components/Tickets';
 import Profile from './_components/Profile';
 import RateCalculator from './_components/RateCalculator';
+import Transactions from './_components/Transactions';
+import CreateOrder from './_components/CreateOrder';
+import Orders from './_components/Orders';
 
 export default function Dashboard() {
   const [isSidenavOpen, setIsSidenavOpen] = useState(false);
@@ -49,10 +54,12 @@ export default function Dashboard() {
   const toggleSidenav = () => setIsSidenavOpen(!isSidenavOpen);
 
   const navItems = [
+    { name: 'Create', icon: Plus },
     { name: 'Orders', icon: Package },
     { name: 'Tickets', icon: Ticket },
     { name: 'Profile', icon: User },
     { name: 'Calculate', icon: CalculatorIcon },
+    { name: 'Transactions', icon: ArrowLeftRight },
   ];
 
   const renderOrderDetails = (order) => (
@@ -175,101 +182,7 @@ export default function Dashboard() {
     switch (activeSection) {
       case 'Orders':
         return (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Order Management</h2>
-            {selectedOrder ? (
-              renderOrderDetails(selectedOrder)
-            ) : (
-              <Tabs defaultValue="recent">
-                <TabsList>
-                  <TabsTrigger value="recent">Recent Orders</TabsTrigger>
-                  <TabsTrigger value="history">Order History</TabsTrigger>
-                </TabsList>
-                <TabsContent value="recent">
-                  {renderOrderList(
-                    [
-                      {
-                        id: '1001',
-                        date: '2023-06-01',
-                        status: 'Shipped',
-                        total: 129.99,
-                        items: [
-                          { name: 'Product A', quantity: 2, price: 64.99 },
-                        ],
-                        shippingAddress: {
-                          name: 'John Doe',
-                          street: '123 Main St',
-                          city: 'Anytown',
-                          state: 'CA',
-                          zip: '12345',
-                          country: 'USA',
-                        },
-                      },
-                      {
-                        id: '1002',
-                        date: '2023-06-03',
-                        status: 'Processing',
-                        total: 79.99,
-                        items: [
-                          { name: 'Product B', quantity: 1, price: 79.99 },
-                        ],
-                        shippingAddress: {
-                          name: 'Jane Smith',
-                          street: '456 Elm St',
-                          city: 'Somewhere',
-                          state: 'NY',
-                          zip: '67890',
-                          country: 'USA',
-                        },
-                      },
-                    ],
-                    'Recent Orders'
-                  )}
-                </TabsContent>
-                <TabsContent value="history">
-                  {renderOrderList(
-                    [
-                      {
-                        id: '1000',
-                        date: '2023-05-28',
-                        status: 'Delivered',
-                        total: 199.99,
-                        items: [
-                          { name: 'Product C', quantity: 1, price: 199.99 },
-                        ],
-                        shippingAddress: {
-                          name: 'Alice Johnson',
-                          street: '789 Oak St',
-                          city: 'Elsewhere',
-                          state: 'TX',
-                          zip: '54321',
-                          country: 'USA',
-                        },
-                      },
-                      {
-                        id: '999',
-                        date: '2023-05-15',
-                        status: 'Delivered',
-                        total: 49.99,
-                        items: [
-                          { name: 'Product D', quantity: 1, price: 49.99 },
-                        ],
-                        shippingAddress: {
-                          name: 'Bob Williams',
-                          street: '321 Pine St',
-                          city: 'Nowhere',
-                          state: 'FL',
-                          zip: '98765',
-                          country: 'USA',
-                        },
-                      },
-                    ],
-                    'Order History'
-                  )}
-                </TabsContent>
-              </Tabs>
-            )}
-          </div>
+          <Orders/>
         );
       case 'Tickets':
         return (
@@ -282,6 +195,14 @@ export default function Dashboard() {
       case 'Calculate':
         return (
           <RateCalculator/>
+        );
+      case 'Create':
+        return (
+          <CreateOrder setActiveSection={setActiveSection} />
+        );
+      case 'Transactions':
+        return (
+          <Transactions/>
         );
       default:
         return null;

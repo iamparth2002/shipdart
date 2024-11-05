@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { set, useForm } from 'react-hook-form';
 import { Eye, EyeOff, Github, Loader2, Ship, Twitter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,10 @@ export default function LoginForm() {
       setLoading(false);
     }
   };
+
+  useEffect(()=>{
+
+  },[])
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-r from-cyan-500 to-blue-500  flex items-center justify-center p-4">
