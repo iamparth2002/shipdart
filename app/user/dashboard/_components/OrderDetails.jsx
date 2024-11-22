@@ -32,6 +32,12 @@ export default function OrderDetails({ order, index, setSelectedOrderIndex }) {
       icon: DollarSign, 
       fields: ['COLLECTABLE_VALUE', 'DECLARED_VALUE'] 
     },
+    { 
+      title: 'Bank Details', 
+      icon: DollarSign, 
+      fields: ["ACCOUNT_HOLDER_NAME", "BANK_NAME",
+        "ACCOUNT_NUMBER", "IFSC_CODE", "ACCOUNT_TYPE", "GST_NUMBER", "PAN_NUMBER", "BRANCH_NAME"] 
+    },
   ]
 
   const formatFieldName = (field) => {
@@ -45,7 +51,7 @@ export default function OrderDetails({ order, index, setSelectedOrderIndex }) {
     if (key === 'COLLECTABLE_VALUE' || key === 'DECLARED_VALUE') {
       return `₹${value}`
     }
-    return value.toString()
+    return value?.toString()
   }
 
   return (

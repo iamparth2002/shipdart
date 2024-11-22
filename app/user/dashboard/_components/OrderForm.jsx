@@ -142,7 +142,6 @@ export default function ShippingOrder({ onBackToOrders, onSubmit, setIsAddingOrd
   const calculateRate = async (data) => {
     setError(null);
     setIsLoading(true);
-
     const formdata = new FormData();
     formdata.append('username', 'SHIPDARTLOGISTIC-BA333267');
     formdata.append('password', '3PIXOLLg3t');
