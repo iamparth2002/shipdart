@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import OrderBalance from './OrderBalance'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -23,6 +24,9 @@ import {
   Calendar,
   Clock,
   MapPin,
+  Ship,
+  ShipIcon,
+  CheckCircle,
 } from 'lucide-react';
 import {
   Accordion,
@@ -31,6 +35,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import axiosInstance from '@/utils/axios';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { cn } from "@/lib/utils"
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -38,6 +44,40 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [awbStatus, setAwbStatus] = useState(null);
   const [awbLoading, setAwbLoading] = useState(false);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  // const [selectedOrder, setSelectedOrder] = useState(null);
+  const [shippingProviders, setShippingProviders] = useState([
+    { id: 1, name: "EcomExpress", price: 100 },
+    { id: 2, name: "DelhiExpress", price: 120 },
+    { id: 3, name: "FastTrack", price: 90 },
+  ]);
+  const [selectedProvider, setSelectedProvider] = useState(null)
+
+  const handleSelectProvider = (provider) => {
+    setSelectedProvider(provider)
+  }
+
+  const handleBookShipment = () => {
+    if (selectedProvider) {
+      console.log(`Booked shipment with ${selectedProvider.name}`)
+      setDialogOpen(false)
+      setSelectedProvider(null)
+    }
+  }
+
+  // const [loading, setLoading] = useState(false);
+  // Replace with your data
+
+  const handleShipOrder = (order) => {
+    // setSelectedOrder(order);
+    setDialogOpen(true);
+  };
+
+  // const handleBookShipment = (provider) => {
+  //   console.log(`Booking shipment with ${provider.name} for order ${selectedOrder.orderId}`);
+  //   setDialogOpen(false);
+  // };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -66,16 +106,16 @@ export default function Orders() {
     try {
       // Use the actual AWB number instead of hardcoding
       const response = await axiosInstance.get(`/orders/awb/${114970250}`);
-  
+
       // Parse the XML data directly
       const xmlData = new DOMParser().parseFromString(response.data, 'text/xml');
-  
+
       // Convert XML to JSON
       const awbData = xmlToJson(xmlData);
-  
+
       // Log data for debugging
       console.log({ awbData });
-  
+
       // Check and format data from awbData based on XML structure
       const formattedData = {
         status: awbData?.["ecomexpress-objects"]?.object?.field?.find(
@@ -109,7 +149,7 @@ export default function Orders() {
       };
 
       console.log(formattedData)
-  
+
       setAwbStatus(formattedData); // Set formatted data in state
     } catch (error) {
       console.error("Error fetching AWB details:", error);
@@ -117,12 +157,12 @@ export default function Orders() {
       setAwbLoading(false);
     }
   };
-  
-  
+
+
 
   const xmlToJson = (xml) => {
     let obj = {};
-    
+
     if (xml.nodeType === 1) { // Element node
       if (xml.attributes.length > 0) {
         obj["@attributes"] = {};
@@ -134,16 +174,16 @@ export default function Orders() {
     } else if (xml.nodeType === 3) { // Text node
       return xml.nodeValue.trim(); // Return trimmed text only if it's not whitespace
     }
-  
+
     // Recurse through child nodes
     if (xml.hasChildNodes()) {
       for (let i = 0; i < xml.childNodes.length; i++) {
         const item = xml.childNodes.item(i);
         const nodeName = item.nodeName;
-  
+
         // Ignore unnecessary #text nodes
         if (nodeName === "#text" && !item.nodeValue.trim()) continue;
-  
+
         if (typeof obj[nodeName] === "undefined") {
           obj[nodeName] = xmlToJson(item);
         } else {
@@ -154,10 +194,10 @@ export default function Orders() {
         }
       }
     }
-    
+
     return obj;
   };
-  
+
 
   const handleBackToList = () => {
     setSelectedOrder(null);
@@ -165,62 +205,66 @@ export default function Orders() {
   };
 
   const renderOrderList = () => (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">Orders</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-4 w-4 animate-spin" />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead >Order ID</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  AWB Number
-                </TableHead>
-                <TableHead>Product</TableHead>
-                {/* <TableHead>Status</TableHead> */}
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.orderId}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {order.awbNumber}
-                  </TableCell>
-                  <TableCell>{order.PRODUCT}</TableCell>
-                  {/* <TableCell>
-                    <Badge
-                      variant={
-                        order.status === 'Shipped' ? 'default' : 'secondary'
-                      }
-                    >
-                      {order.status}
-                    </Badge>
-                  </TableCell> */}
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewDetails(order)}
-                    >
-                      <Eye className="h-4 w-4 md:mr-2" />
-                      <span className="hidden md:inline">View</span>
-                    </Button>
-                  </TableCell>
+    <>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Orders</CardTitle>
+
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead >Order ID</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    AWB Number
+                  </TableHead>
+                  <TableHead>Product</TableHead>
+                  {/* <TableHead>Status</TableHead> */}
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {orders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.orderId}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {order.awbNumber}
+                    </TableCell>
+                    <TableCell>{order.PRODUCT}</TableCell>
+                    <TableCell className="text-right space-x-2">
+
+                      <Button
+                        size="sm"
+                        onClick={() => handleShipOrder(order)}
+                      >
+                        <ShipIcon className="h-4 w-4 md:mr-2" />
+                        <span className="hidden md:inline">Ship</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewDetails(order)}
+                      >
+                        <Eye className="h-4 w-4 md:mr-2" />
+                        <span className="hidden md:inline">View</span>
+                      </Button>
+
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+    </>
   );
 
   const renderAWBStatus = () => (
@@ -569,8 +613,62 @@ export default function Orders() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Order Management</h1>
+      <div className='flex justify-between items-center'>
+        <h1 className="text-3xl font-bold">Order Management</h1>
+        <OrderBalance />
+      </div>
       {selectedOrder ? renderOrderDetails(selectedOrder) : renderOrderList()}
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Choose Your Shipping Partner</DialogTitle>
+            <DialogDescription>
+              Select a reliable shipping provider for your package delivery.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {shippingProviders.map((provider) => (
+              <div
+                key={provider.id}
+                className={cn(
+                  "flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer",
+                  selectedProvider?.id === provider.id
+                    ? "border-primary bg-primary/10"
+                    : "border-gray-200 hover:border-primary"
+                )}
+                onClick={() => handleSelectProvider(provider)}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="bg-primary text-primary-foreground w-10 h-10 rounded-full flex items-center justify-center">
+                    {provider.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="font-medium">{provider.name}</h3>
+                    <div className="flex items-center text-green-600">
+                      {/* <DollarSign className="w-4 h-4 mr-1" /> */}
+                      <span>INR {provider.price}</span>
+                    </div>
+                  </div>
+                </div>
+                {selectedProvider?.id === provider.id && (
+                  <CheckCircle className="w-5 h-5 text-primary" />
+                )}
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleBookShipment} disabled={!selectedProvider}>
+              Book Shipment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      
     </div>
   );
 }

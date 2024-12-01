@@ -15,7 +15,6 @@ import {
 import OrderForm from './OrderForm'
 import OrderSummary from './OrderSummary'
 import OrderDetails from './OrderDetails'
-import OrderBalance from './OrderBalance'
 import axiosInstance from '@/utils/axios'
 import BulkOrder from './BulkOrder'
 
@@ -92,7 +91,6 @@ export default function OrderManagement({setActiveSection}) {
         <h2 className="hidden md:block text-2xl font-bold">Order Management</h2>
         <div className='flex gap-2'>
         <BulkOrder setOrders={setOrders}/>
-        <OrderBalance/>
         </div>
         
       </div>

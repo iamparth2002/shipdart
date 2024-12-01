@@ -6,6 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import axiosInstance from '@/utils/axios';
 import { Badge } from '@/components/ui/badge';
+import { Select,SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { getIssueTypeLabel } from '@/utils/helpers';
 
 const Tickets = () => {
   const {
@@ -14,19 +17,21 @@ const Tickets = () => {
     formState: { errors, isValid },
     reset,
   } = useForm({
-    mode: 'onChange', // Revalidate on input change
+    mode: 'onChange',
   });
 
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState([]);
   const [ticketLoading, setTicketLoading] = useState(true);
   const [ticketError, setTicketError] = useState(null);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [issueType, setIssueType] = useState('');
 
   const fetchTickets = async () => {
     setTicketLoading(true);
     try {
       const response = await axiosInstance.get('/ticket');
-      setTickets(response.data); // Assuming response contains an array of tickets
+      setTickets(response.data);
     } catch (error) {
       setTicketError('Error fetching tickets');
     } finally {
@@ -35,19 +40,25 @@ const Tickets = () => {
   };
 
   const onSubmit = async (data) => {
+    if (!issueType) {
+      alert('Please select an issue type.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Make the API call to submit the ticket
       const response = await axiosInstance.post('/ticket/create', {
         subject: data.subject,
         message: data.description,
+        issueType,
       });
 
       console.log('Ticket created successfully:', response.data);
       alert('Ticket submitted successfully');
       fetchTickets();
       reset();
+      setIssueType('');
     } catch (error) {
       console.log('Error submitting ticket:', error);
       alert('Failed to submit the ticket');
@@ -56,10 +67,7 @@ const Tickets = () => {
     }
   };
 
-  // Fetch ticket history from the API
   useEffect(() => {
-    
-
     fetchTickets();
   }, []);
 
@@ -106,9 +114,24 @@ const Tickets = () => {
               )}
             </div>
 
+            <div>
+              <Label htmlFor="issueType">Issue Type</Label>
+              <Select onValueChange={(value) => setIssueType(value)} value={issueType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select issue type" />
+                </SelectTrigger>
+                <SelectContent>
+                <SelectItem value="shipment">Shipment related issue (AWB mandatory)</SelectItem>
+                <SelectItem value="tech">Tech related issue</SelectItem>
+                <SelectItem value="account">Account or billing related issue</SelectItem>
+                <SelectItem value="other">Other issues</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button
               type="submit"
-              disabled={!isValid || loading} // Disable if form is invalid or while loading
+              disabled={!isValid || loading}
             >
               {loading ? 'Submitting...' : 'Submit Ticket'}
             </Button>
@@ -128,18 +151,50 @@ const Tickets = () => {
             <p className="text-red-500">{ticketError}</p>
           ) : tickets.length > 0 ? (
             tickets.map((ticket) => (
-              <TicketCard key={ticket._id} {...ticket} />
+              <TicketCard
+                key={ticket._id}
+                ticket={ticket}
+                onClick={() => setSelectedTicket(ticket)}
+              />
             ))
           ) : (
             <p>No tickets found.</p>
           )}
         </CardContent>
       </Card>
+
+      {/* Ticket details dialog */}
+      <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
+        <DialogContent>
+          {selectedTicket && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedTicket.subject}</DialogTitle>
+                <DialogDescription>{selectedTicket.message}</DialogDescription>
+              </DialogHeader>
+              <p className="mt-4 text-sm font-semibold">
+                Issue Type: {getIssueTypeLabel(selectedTicket.issueType)}
+                 
+              </p>
+              <p className="text-xs text-gray-400">
+                Created on: {new Date(selectedTicket.createdAt).toLocaleString()}
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setSelectedTicket(null)}
+              >
+                Close
+              </Button>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-const TicketCard = ({ subject, description, status, createdAt }) => {
+const TicketCard = ({ ticket, onClick }) => {
   const statusColor = {
     open: 'bg-yellow-500',
     'in-progress': 'bg-blue-500',
@@ -147,17 +202,17 @@ const TicketCard = ({ subject, description, status, createdAt }) => {
   };
 
   return (
-    <Card className="mb-4">
+    <Card className="mb-4 cursor-pointer" onClick={onClick}>
       <CardContent className="pt-6">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="text-lg font-semibold">{subject}</h3>
-          <Badge className={`${statusColor[status]} text-white`}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+          <h3 className="text-lg font-semibold">{ticket.subject}</h3>
+          <Badge className={`${statusColor[ticket.status]} text-white`}>
+            {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
           </Badge>
         </div>
-        <p className="text-sm text-gray-600 mb-2">{description}</p>
+        <p className="text-sm text-gray-600 mb-2">{ticket.description}</p>
         <p className="text-xs text-gray-400">
-          Created on: {new Date(createdAt).toLocaleString()}
+          Created on: {new Date(ticket.createdAt).toLocaleString()}
         </p>
       </CardContent>
     </Card>

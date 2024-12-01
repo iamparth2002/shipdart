@@ -28,3 +28,14 @@ export const fetchWalletBalance = async (setWalletBalance,setLoading) => {
     setLoading(false);
   }
 };
+
+export const getIssueTypeLabel = (issueType) => {
+  const issueTypeMapping = {
+    shipment: "Shipment related issue (AWB mandatory)",
+    tech: "Tech related issue",
+    account: "Account or billing related issue",
+    other: "Other issues",
+  };
+
+  return issueTypeMapping[issueType] || "Unknown issue type"; // Default to handle invalid issueType
+};

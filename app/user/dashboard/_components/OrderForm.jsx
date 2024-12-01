@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Loader2, Terminal } from 'lucide-react';
 
 const rateCalculatorSchema = z.object({
   originPincode: z.string().length(6, "Pincode must be 6 digits"),
@@ -33,17 +33,17 @@ const orderFormSchema = z.object({
   STATE: z.string().min(1, 'State is required'),
   PINCODE: z.string().min(1, 'Pincode is required'),
   TELEPHONE: z.string().regex(/^\d{10}$/, 'Must be 10 digits').optional(),
-  MOBILE: z.string().regex(/^\d{10}$/, 'Must be 10 digits').min(1, 'Mobile is required'),
+  MOBILE: z.string().regex(/^\d{10}$/, 'Must be 10 digits').optional().or(z.literal('')),
   RETURN_NAME: z.string().min(1, 'Return Name is required'),
-  RETURN_MOBILE: z.string().regex(/^\d{10}$/, 'Must be 10 digits').min(1, 'Return Mobile is required'),
+  RETURN_MOBILE: z.string().regex(/^\d{10}$/, 'Must be 10 digits').optional(),
   RETURN_PINCODE: z.string().min(1, 'Return Pincode is required'),
   RETURN_ADDRESS_LINE1: z.string().min(1, 'Return Address Line 1 is required'),
   RETURN_ADDRESS_LINE2: z.string().optional(),
-  RETURN_PHONE: z.string().regex(/^\d{10}$/, 'Must be 10 digits').min(1, 'Return Phone is required'),
+  RETURN_PHONE: z.string().regex(/^\d{10}$/, 'Must be 10 digits').optional().or(z.literal('')),
   PICKUP_NAME: z.string().min(1, 'Pickup Name is required'),
   PICKUP_PINCODE: z.string().min(1, 'Pickup Pincode is required'),
   PICKUP_MOBILE: z.string().regex(/^\d{10}$/, 'Must be 10 digits').min(1, 'Pickup Mobile is required'),
-  PICKUP_PHONE: z.string().regex(/^\d{10}$/, 'Must be 10 digits').min(1, 'Pickup Phone is required'),
+  PICKUP_PHONE: z.string().regex(/^\d{10}$/, 'Must be 10 digits').optional().or(z.literal('')),
   PICKUP_ADDRESS_LINE1: z.string().min(1, 'Pickup Address Line 1 is required'),
   PICKUP_ADDRESS_LINE2: z.string().optional(),
   COLLECTABLE_VALUE: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Must be a valid number').min(1, 'Collectable Value is required'),
@@ -67,6 +67,7 @@ const orderFormSchema = z.object({
 });
 
 const orderFormSteps = [
+  { title: 'Shipping Details', fields: ['PRODUCT'] },
   { title: 'Consignee Details', fields: ['CONSIGNEE', 'CONSIGNEE_ADDRESS1', 'CONSIGNEE_ADDRESS2', 'CONSIGNEE_ADDRESS3', 'DESTINATION_CITY', 'STATE', 'PINCODE', 'TELEPHONE', 'MOBILE'] },
   { title: 'Pickup Details', fields: ['PICKUP_NAME', 'PICKUP_PINCODE', 'PICKUP_MOBILE', 'PICKUP_PHONE', 'PICKUP_ADDRESS_LINE1', 'PICKUP_ADDRESS_LINE2'] },
   { title: 'Return Details', fields: ['RETURN_NAME', 'RETURN_MOBILE', 'RETURN_PINCODE', 'RETURN_ADDRESS_LINE1', 'RETURN_ADDRESS_LINE2', 'RETURN_PHONE'] },
@@ -75,7 +76,7 @@ const orderFormSteps = [
 ];
 
 export default function ShippingOrder({ onBackToOrders, onSubmit, setIsAddingOrder }) {
-  const [step, setStep] = useState('rate');
+  const [step, setStep] = useState('orderForm');
   const [rateResult, setRateResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -204,130 +205,130 @@ export default function ShippingOrder({ onBackToOrders, onSubmit, setIsAddingOrd
     setOrderFormStep((prev) => Math.max(prev - 1, 0));
   };
 
-  const renderRateCalculator = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle>Shipping Rate Calculator</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={rateForm.handleSubmit(calculateRate)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="originPincode">Origin Pincode</Label>
-              <Input {...rateForm.register('originPincode')} />
-              {rateForm.formState.errors.originPincode && (
-                <p className="text-sm text-red-500">{rateForm.formState.errors.originPincode.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="destinationPincode">Destination Pincode</Label>
-              <Input {...rateForm.register('destinationPincode')} />
-              {rateForm.formState.errors.destinationPincode && (
-                <p className="text-sm text-red-500">{rateForm.formState.errors.destinationPincode.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="productType">Product Type</Label>
-              <Select onValueChange={(value) => rateForm.setValue('productType', value)} defaultValue={rateForm.getValues('productType')}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select product type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ppd">Prepaid</SelectItem>
-                  <SelectItem value="cod">Cash on Delivery</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="chargeableWeight">Chargeable Weight (kg)</Label>
-              <Input {...rateForm.register('chargeableWeight')} type="number" step="0.01" min="0" />
-              {rateForm.formState.errors.chargeableWeight && (
-                <p className="text-sm text-red-500">{rateForm.formState.errors.chargeableWeight.message}</p>
-              )}
-            </div>
-            {rateForm.watch('productType') === 'cod' && (
-              <div  className="space-y-2">
-                <Label htmlFor="codAmount">COD Amount</Label>
-                <Input {...rateForm.register('codAmount')} type="number" step="0.01" min="0" />
-              </div>
-            )}
-          </div>
-          <div className="flex justify-between">
-            <Button type="button" variant="outline" onClick={() => { setIsAddingOrder(false) }}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Orders
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Calculating...
-                </>
-              ) : (
-                'Calculate Rate'
-              )}
-            </Button>
-          </div>
-        </form>
-        {error && (
-          <Alert variant="destructive" className="mt-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-      </CardContent>
-    </Card>
-  );
+  // const renderRateCalculator = () => (
+  //   <Card>
+  //     <CardHeader>
+  //       <CardTitle>Shipping Information</CardTitle>
+  //     </CardHeader>
+  //     <CardContent>
+  //       <form onSubmit={rateForm.handleSubmit(calculateRate)} className="space-y-4">
+  //         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  //           <div className="space-y-2">
+  //             <Label htmlFor="originPincode">Origin Pincode</Label>
+  //             <Input {...rateForm.register('originPincode')} />
+  //             {rateForm.formState.errors.originPincode && (
+  //               <p className="text-sm text-red-500">{rateForm.formState.errors.originPincode.message}</p>
+  //             )}
+  //           </div>
+  //           <div className="space-y-2">
+  //             <Label htmlFor="destinationPincode">Destination Pincode</Label>
+  //             <Input {...rateForm.register('destinationPincode')} />
+  //             {rateForm.formState.errors.destinationPincode && (
+  //               <p className="text-sm text-red-500">{rateForm.formState.errors.destinationPincode.message}</p>
+  //             )}
+  //           </div>
+  //           <div className="space-y-2">
+  //             <Label htmlFor="productType">Product Type</Label>
+  //             <Select onValueChange={(value) => rateForm.setValue('productType', value)} defaultValue={rateForm.getValues('productType')}>
+  //               <SelectTrigger>
+  //                 <SelectValue placeholder="Select product type" />
+  //               </SelectTrigger>
+  //               <SelectContent>
+  //                 <SelectItem value="ppd">Prepaid</SelectItem>
+  //                 <SelectItem value="cod">Cash on Delivery</SelectItem>
+  //               </SelectContent>
+  //             </Select>
+  //           </div>
+  //           <div className="space-y-2">
+  //             <Label htmlFor="chargeableWeight">Chargeable Weight (kg)</Label>
+  //             <Input {...rateForm.register('chargeableWeight')} type="number" step="0.01" min="0" />
+  //             {rateForm.formState.errors.chargeableWeight && (
+  //               <p className="text-sm text-red-500">{rateForm.formState.errors.chargeableWeight.message}</p>
+  //             )}
+  //           </div>
+  //           {rateForm.watch('productType') === 'cod' && (
+  //             <div className="space-y-2">
+  //               <Label htmlFor="codAmount">COD Amount</Label>
+  //               <Input {...rateForm.register('codAmount')} type="number" step="0.01" min="0" />
+  //             </div>
+  //           )}
+  //         </div>
+  //         <div className="flex justify-between">
+  //           <Button type="button" variant="outline" onClick={() => { setIsAddingOrder(false) }}>
+  //             <ArrowLeft className="mr-2 h-4 w-4" />
+  //             Back to Orders
+  //           </Button>
+  //           <Button type="submit" disabled={isLoading}>
+  //             {isLoading ? (
+  //               <>
+  //                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+  //                 Calculating...
+  //               </>
+  //             ) : (
+  //               'Calculate Rate'
+  //             )}
+  //           </Button>
+  //         </div>
+  //       </form>
+  //       {error && (
+  //         <Alert variant="destructive" className="mt-4">
+  //           <AlertCircle className="h-4 w-4" />
+  //           <AlertTitle>Error</AlertTitle>
+  //           <AlertDescription>{error}</AlertDescription>
+  //         </Alert>
+  //       )}
+  //     </CardContent>
+  //   </Card>
+  // );
 
-  const renderRateResult = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle>Shipping Rate Result</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="font-semibold">Origin Pincode:</p>
-              <p>{rateForm.getValues('originPincode')}</p>
-            </div>
-            <div>
-              <p  className="font-semibold">Destination Pincode:</p>
-              <p>{rateForm.getValues('destinationPincode')}</p>
-            </div>
-            <div>
-              <p className="font-semibold">Freight Charges:</p>
-              <p>₹{rateResult.chargesBreakup.FRT}</p>
-            </div>
-            <div>
-              <p className="font-semibold">Chargeable Weight:</p>
-              <p>{rateForm.getValues('chargeableWeight')} kg</p>
-            </div>
-            <div>
-              <p className="font-semibold">Fuel Surcharge:</p>
-              <p>₹{rateResult.chargesBreakup.FUEL}</p>
-            </div>
-            <div>
-              <p className="font-semibold">GST Charges:</p>
-              <p>₹{rateResult.chargesBreakup.GST}</p>
-            </div>
-            <div>
-              <p className="font-semibold">Total Charges:</p>
-              <p className="text-lg font-bold">₹{rateResult.chargesBreakup.total_charge}</p>
-            </div>
-          </div>
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep('rate')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            <Button onClick={proceedToOrderForm}>Proceed to Order</Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  // const renderRateResult = () => (
+  //   <Card>
+  //     <CardHeader>
+  //       <CardTitle>Shipping Rate Result</CardTitle>
+  //     </CardHeader>
+  //     <CardContent>
+  //       <div className="space-y-4">
+  //         <div className="grid grid-cols-2 gap-4">
+  //           <div>
+  //             <p className="font-semibold">Origin Pincode:</p>
+  //             <p>{rateForm.getValues('originPincode')}</p>
+  //           </div>
+  //           <div>
+  //             <p className="font-semibold">Destination Pincode:</p>
+  //             <p>{rateForm.getValues('destinationPincode')}</p>
+  //           </div>
+  //           <div>
+  //             <p className="font-semibold">Freight Charges:</p>
+  //             <p>₹{rateResult.chargesBreakup.FRT}</p>
+  //           </div>
+  //           <div>
+  //             <p className="font-semibold">Chargeable Weight:</p>
+  //             <p>{rateForm.getValues('chargeableWeight')} kg</p>
+  //           </div>
+  //           <div>
+  //             <p className="font-semibold">Fuel Surcharge:</p>
+  //             <p>₹{rateResult.chargesBreakup.FUEL}</p>
+  //           </div>
+  //           <div>
+  //             <p className="font-semibold">GST Charges:</p>
+  //             <p>₹{rateResult.chargesBreakup.GST}</p>
+  //           </div>
+  //           <div>
+  //             <p className="font-semibold">Total Charges:</p>
+  //             <p className="text-lg font-bold">₹{rateResult.chargesBreakup.total_charge}</p>
+  //           </div>
+  //         </div>
+  //         <div className="flex justify-between">
+  //           <Button variant="outline" onClick={() => setStep('rate')}>
+  //             <ArrowLeft className="mr-2 h-4 w-4" />
+  //             Back
+  //           </Button>
+  //           <Button onClick={proceedToOrderForm}>Proceed to Order</Button>
+  //         </div>
+  //       </div>
+  //     </CardContent>
+  //   </Card>
+  // );
 
   const renderOrderForm = () => (
     <Card>
@@ -336,10 +337,16 @@ export default function ShippingOrder({ onBackToOrders, onSubmit, setIsAddingOrd
       </CardHeader>
       <CardContent>
         <form onSubmit={orderForm.handleSubmit(onSubmit)} className="space-y-6">
+          {/* {orderFormStep === 5 && orderForm.getValues('PRODUCT') !== 'COD' &&
+            <Alert>
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>No Bank Details Required!</AlertTitle>
+              <AlertDescription>
+                Bank Details are not required For PPD Orders
+              </AlertDescription>
+            </Alert>
+          } */}
           {orderFormSteps[orderFormStep].fields.map((field) => {
-            if (orderFormStep === 4 && orderForm.getValues('PRODUCT') !== 'COD') {
-              return null;
-            }
             switch (field) {
               case 'PRODUCT':
                 return (
@@ -393,19 +400,23 @@ export default function ShippingOrder({ onBackToOrders, onSubmit, setIsAddingOrd
               case 'ACCOUNT_TYPE':
                 return (
                   <div key={field} className="space-y-2">
-                    <Label htmlFor={field}>{field.replace(/_/g, ' ')}</Label>
-                    <Select
-                      onValueChange={(value) => orderForm.setValue(field, value)}
-                      defaultValue={orderForm.getValues(field)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select account type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="savings">Savings</SelectItem>
-                        <SelectItem value="current">Current</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {
+                      orderForm.getValues('PRODUCT') == 'COD' &&
+                      <><Label htmlFor={field}>{field.replace(/_/g, ' ')}</Label>
+                        <Select
+                          onValueChange={(value) => orderForm.setValue(field, value)}
+                          defaultValue={orderForm.getValues(field)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select account type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="savings">Savings</SelectItem>
+                            <SelectItem value="current">Current</SelectItem>
+                          </SelectContent>
+                        </Select></>
+                    }
+
                     {orderForm.formState.errors[field] && (
                       <p className="text-sm text-red-500">{orderForm.formState.errors[field].message}</p>
                     )}
@@ -422,11 +433,37 @@ export default function ShippingOrder({ onBackToOrders, onSubmit, setIsAddingOrd
                       id={field}
                       {...orderForm.register(field)}
                       placeholder={`Enter ${field.toLowerCase().replace(/_/g, ' ')}`}
-                      disabled
                     />
                     {orderForm.formState.errors[field] && (
                       <p className="text-sm text-red-500">{orderForm.formState.errors[field].message}</p>
                     )}
+                  </div>
+                );
+              case 'ACCOUNT_HOLDER_NAME':
+              case 'BANK_NAME':
+              case 'ACCOUNT_NUMBER':
+              case 'ACCOUNT_HOLDER_NAME':
+              case 'IFSC_CODE':
+              case 'ACCOUNT_TYPE':
+              case 'BRANCH_NAME':
+              case 'GST_NUMBER':
+              case 'PAN_NUMBER':
+                return (
+                  <div key={field} className="space-y-2">
+                    {
+                      // orderForm.getValues('PRODUCT') == 'COD' &&
+                      <>
+                        <Label htmlFor={field}>{field.replace(/_/g, ' ')}</Label>
+                        <Input
+                          id={field}
+                          {...orderForm.register(field)}
+                          placeholder={`Enter ${field.toLowerCase().replace(/_/g, ' ')}`}
+                        />
+                        {orderForm.formState.errors[field] && (
+                          <p className="text-sm text-red-500">{orderForm.formState.errors[field].message}</p>
+                        )}
+                      </>
+                    }
                   </div>
                 );
               default:
@@ -451,8 +488,8 @@ export default function ShippingOrder({ onBackToOrders, onSubmit, setIsAddingOrd
                 Previous
               </Button>
             ) : (
-              <Button type="button" variant="outline" onClick={() => setStep('rateResult')}>
-                Back to Rate Result
+              <Button type="button" variant="outline" onClick={() => setIsAddingOrder(false)}>
+                Back
               </Button>
             )}
             {orderFormStep === orderFormSteps.length - 1 ? (
@@ -469,9 +506,9 @@ export default function ShippingOrder({ onBackToOrders, onSubmit, setIsAddingOrd
   );
 
   return (
-    <div className="container mx-auto md:p-4">
-      {step === 'rate' && renderRateCalculator()}
-      {step === 'rateResult' && renderRateResult()}
+    <div className="container mx-auto ">
+      {/* {step === 'rate' && renderRateCalculator()}
+      {step === 'rateResult' && renderRateResult()} */}
       {step === 'orderForm' && renderOrderForm()}
     </div>
   );
